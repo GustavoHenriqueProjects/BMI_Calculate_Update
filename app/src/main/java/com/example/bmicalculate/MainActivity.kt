@@ -1,5 +1,6 @@
 package com.example.bmicalculate
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -9,12 +10,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bmicalculate.calculo.calculate
+import com.example.bmicalculate.calculo.getBMIClassification
 import com.example.bmicalculate.ui.theme.BMICalculateTheme
 
 /***************************************************************************************************
@@ -68,21 +70,35 @@ fun CalculatorScreen() {
 
     /***************************************************************
      *Criando variaveis de estado, resposaveis por armagenar
-     * as informações digitadas nas caixas de texto.
+     * as informações digitadas nas caixas de texto e se atualizar.
+     *
+     *
+     *Com o (by) não preciso de .value para pegar o valor da variavel
      ***************************************************************/
 
-    var weightState = rememberSaveable {
+    var weightState by remember {
         mutableStateOf("")
 
     }
 
-    var heightState = rememberSaveable() {
+    var heightState by rememberSaveable() {
         mutableStateOf("")
     }
 
-    var bmiState = rememberSaveable {
+    var bmiState by rememberSaveable {
         mutableStateOf("")
     }
+
+    var bmiClassificationState by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    /********************************************************************
+    * Variaveis de contexto do método, resonsavel por indicar aonde
+    * se encontra atualmente um determino objeto ex: string.xml
+    **********************************************************************/
+    val context = LocalContext.current.applicationContext
+    val context2 = LocalContext.current
 
     /***************************************************************
      * Surface: Responsável por abrange todo o conteudo, sendo o pai
@@ -145,7 +161,7 @@ fun CalculatorScreen() {
                 OutlinedTextField(
 
                     //Passa os valores da variavel heightState para a caixa de texto
-                    value = heightState.value,
+                    value = heightState,
 
                     onValueChange = {
 
@@ -160,7 +176,7 @@ fun CalculatorScreen() {
 
                         Log.i("Smartphone", it)
 
-                        heightState.value = it
+                        heightState = it
 
                     },
 
@@ -186,13 +202,13 @@ fun CalculatorScreen() {
                 OutlinedTextField(
 
                     //Passa os valores da variavel weightState para a caixa de texto
-                    value = weightState.value,
+                    value = weightState,
 
                     onValueChange = {
 
                         Log.i("Smartphone", it)
 
-                        weightState.value = it
+                        weightState= it
 
                     },
 
@@ -210,10 +226,25 @@ fun CalculatorScreen() {
 
             Button(
                 onClick = {
-                    bmiState.value = calculate(
-                        weight = weightState.value.toDouble(), height = heightState.value.toDouble()
-                    ).toString()
-                },
+                    /*******************************************************************************
+                     *Essa forma de fazer funciona mais deixa o programa poluido:
+                     *
+                     * bmiState = calculate(
+                     *  weight = weightState.value.toDouble(), height = heightState.value.toDouble()
+                     * ).toString()
+                     *******************************************************************************/
+
+                    //Forma correta: Convertendo o valor da variaveis para Double
+                    var w = weightState.toDouble()
+                    var h = heightState.toDouble()
+                    var bmi = calculate(weight = w, height = h)
+
+                    //Formatando casas decimais
+                    bmiState = String.format("%.2f",bmi)
+
+                    /*A variavel context tem o local do contexto da minha aplicação*/
+                    bmiClassificationState = getBMIClassification(bmi, context)
+                          },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 70.dp, end = 70.dp),
@@ -265,7 +296,7 @@ fun CalculatorScreen() {
 
                         Text(
 
-                            text = bmiState.value,
+                            text = bmiState,
                             color = Color.White,
                             fontSize = 33.sp,
                             fontWeight = FontWeight.Bold
@@ -274,7 +305,7 @@ fun CalculatorScreen() {
 
                         Text(
 
-                            text = stringResource(id = R.string.ideal_state),
+                            text = bmiClassificationState,
                             color = Color.White,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
@@ -284,7 +315,10 @@ fun CalculatorScreen() {
                         Row() {
 
                             Button(onClick = {
-
+                                bmiState = "0.0"
+                                bmiClassificationState = ""
+                                weightState = ""
+                                heightState = ""
 
                             }) {
 
@@ -299,7 +333,18 @@ fun CalculatorScreen() {
                             Spacer(modifier = Modifier.width(40.dp))
 
                             Button(onClick = {
+                            /***********************************************************************
+                            * Abrir segunda tela
+                            *
+                            * Intent -> Intenção de realizar uma ação.
+                            *
+                            *  ::class.java -> cria uma instancia para abrir a outra tela: WelcomeActivity
+                            *
+                            *
+                            ************************************************************************/
 
+                            val openOther = Intent(context2, WelcomeActivity::class.java)
+                                context2.startActivity(openOther)
 
                             }
                             ) {
