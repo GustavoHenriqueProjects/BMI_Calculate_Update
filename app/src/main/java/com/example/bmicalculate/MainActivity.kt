@@ -354,7 +354,6 @@ fun CalculatorScreen() {
                                     text = stringResource(id = R.string.share),
                                     fontSize = 16.sp,
 
-
                                     )
                             }
                         }
